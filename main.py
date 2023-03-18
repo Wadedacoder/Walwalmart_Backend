@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
+import os
 # from config import settings
 import mysql.connector
 import json
