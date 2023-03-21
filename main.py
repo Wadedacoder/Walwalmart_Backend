@@ -17,10 +17,14 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/admins")
-async def say_hello():
-    result = database.run_select_query(query_select)
-    return result
+#Authentication route for admin
+@app.post("/admin/auth")
+async def admin_auth(username: str, password: str):
+    query = f"SELECT * FROM admins WHERE username = '{username}' AND password = '{password}';"
+    print(query)
+    result = database.run_select_query(query)
+    print(result)
+    return json.loads(result)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=5000, log_level="info")

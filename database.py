@@ -47,4 +47,3 @@ class Database:
             return True
         except:
             return False
-
