@@ -5,7 +5,7 @@ import uvicorn
 from database import Database
 import hashlib
 import json
-from forms import AdditionalUserDataForm
+from forms import AdditionalUserDataForm, OlapForm
 
 # from config import settings
 
@@ -64,9 +64,13 @@ async def sign_up(form_data: OAuth2PasswordRequestForm = Depends(),
     username = form_data.username
     password = form_data.password
     hashed = hashlib.sha256(password.encode()).hexdigest()
-    display_name = additional_data.display_name
+    display_name = additional_data.name
     Amount = additional_data.Amount
-    query1 = f"INSERT INTO users (DisplayName, Username, Password, AddressID, Amount) VALUES (`{display_name}`, `{username}`, `{hashed}`, `{Amount});"
+    print(display_name, type(display_name) ,Amount)
+    # print()
+    query1 = f"INSERT INTO users (DisplayName, Username, Password, AddressID, Amount) VALUES " \
+             f"('{display_name}', '{username}', '{hashed}', 1, {Amount});"
+    # query2 = f"INSERT INTO users (DisplayName, Username, Password, AddressID, Amount) VALUES ('abr', 'abr', 'abr', 1, 0);"
     database.run_insert_query(query1)
     return {"message": hashed}
 
@@ -88,6 +92,32 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     query2 = f"INSERT INTO user_tokens (user_id, token) VALUES ('{curr_user}','{token}');"
     database.run_insert_query(query2)
     return {"access_token": token, "token_type": "bearer"}
+
+@app.post("/olap")
+async def olap(additional_data: AdditionalUserDataForm = Depends()):
+    queryn = additional_data.Amount
+    if(queryn == 1):
+        query = f"SELECT p.ProductName,p.ProductPrice,p.ProductQuantity,c.CategoryName, RANK() OVER (PARTITION BY c.CategoryID ORDER BY p.ProductPrice DESC) AS CategoryPriceRank, DENSE_RANK() OVER (PARTITION BY c.CategoryID ORDER BY p.ProductPrice DESC) AS CategoryPriceDenseRank, PERCENT_RANK() OVER (PARTITION BY c.CategoryID ORDER BY p.ProductPrice DESC) AS CategoryPricePercentRank, CUME_DIST() OVER (PARTITION BY c.CategoryID ORDER BY p.ProductPrice DESC) AS CategoryPriceCumDist FROM products p JOIN categories c ON p.CategoryID = c.CategoryID ORDER BY c.CategoryName, CategoryPriceRank;"
+    elif(queryn == 2):
+        query = f"SELECT DATE_FORMAT(DATE_ADD(DeliveryDate, INTERVAL 7 DAY), '%Y-%m-%d') AS DeliveryDate_7_days_later, COUNT(*) AS Total_Checkouts FROM checkout WHERE DeliveryDate BETWEEN '2022-06-01' AND '2023-05-01' GROUP BY DeliveryDate_7_days_later ORDER BY DeliveryDate_7_days_later ASC;"
+    elif(queryn == 3):
+        query = f"SELECT c.CategoryName, SUM(p.ProductPrice * ic.Quantity) AS TotalRevenue FROM categories c JOIN products p ON c.CategoryID = p.CategoryID JOIN itemsincarts ic ON p.ProductID = ic.ProductID JOIN cart ct ON ic.CartID = ct.CartID JOIN checkout chk ON ct.CartID = chk.CartID GROUP BY c.CategoryID;"
+    elif(queryn == 4):
+        query = f"SELECT p.ProductName, SUM(ic.Quantity) AS TotalSold FROM products p JOIN itemsincarts ic ON p.ProductID = ic.ProductID GROUP BY p.ProductID ORDER BY TotalSold DESC LIMIT 10;"
+    elif(queryn == 5):
+        query = f"SELECT users.DisplayName AS CustomerName, SUM(p.ProductPrice * ic.Quantity) AS Revenue FROM users JOIN cart ON users.UserID = cart.UserID JOIN itemsincarts ic ON cart.CartID = ic.CartID JOIN products p ON ic.ProductID = p.ProductID GROUP BY users.UserID ORDER BY Revenue DESC LIMIT 5;"
+    else:
+        query = f"SELECT categories.CategoryName, SUM(itemsincarts.Quantity) AS Quantity FROM categories JOIN products ON categories.CategoryID = products.CategoryID JOIN itemsincarts ON products.ProductID = itemsincarts.ProductID GROUP BY categories.CategoryName WITH ROLLUP;"
+    result = database.run_select_query(query)
+    return result
+
+@app.post("/users/transactions")
+async def transactions(Formdata: AdditionalUserDataForm = Depends()):
+    name = Formdata.name
+    Amount = Formdata.Amount
+    q = f"INSERT INTO itemsincarts (CartID, ProductID, Quantity) VALUES ('{name}','{Amount}',1);"
+    database.run_insert_query(q)
+    return {"message": "success"}
 
 
 

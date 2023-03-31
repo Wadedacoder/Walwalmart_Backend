@@ -4,7 +4,10 @@ from pydantic.dataclasses import dataclass
 
 @dataclass
 class AdditionalUserDataForm:
-   display_name: str = Form(...)
+   name: str = Form(...)
    Amount: int = Form(...)
+
+class OlapForm:
+   queryn: int = Form(...)
 
 
