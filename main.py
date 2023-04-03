@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 # from typing import Annotated
 import uvicorn
@@ -17,6 +17,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 query_select = ("SELECT * FROM admins ; ")
 query_select2 = ("SELECT * FROM users WHERE username = %s;")
 
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"]
+# )
 
 @app.get("/")
 async def root():
@@ -75,9 +82,10 @@ async def sign_up(form_data: OAuth2PasswordRequestForm = Depends(),
     return {"message": hashed}
 
 @app.post("/users/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    username = form_data.username
-    password = form_data.password
+async def login(form_data: dict):
+    username = form_data['username']
+    password = form_data['password']
+    print(username, password)
     hashed = hashlib.sha256(password.encode()).hexdigest()
     query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{hashed}';"
     result = database.run_select_query(query)
