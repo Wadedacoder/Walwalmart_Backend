@@ -85,13 +85,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     result = json.loads(result)
     curr_user = result[0]["UserID"]
-    # print(curr_user)
-    # Generate token and store in database
-    token = hashlib.sha256(str(curr_user).encode()).hexdigest()
-    # print(token)
-    query2 = f"INSERT INTO user_tokens (user_id, token) VALUES ('{curr_user}','{token}');"
-    database.run_insert_query(query2)
-    return {"access_token": token, "token_type": "bearer"}
+    # return true
+    return {"status": "success", "message": "Logged in successfully", "user_id": curr_user}
 
 @app.post("/olap")
 async def olap(additional_data: AdditionalUserDataForm = Depends()):
@@ -122,4 +117,4 @@ async def transactions(Formdata: AdditionalUserDataForm = Depends()):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORTtoc", default=5000), log_level="info")
+    uvicorn.run("main:app", host="0.0.0.0", port=os.getenv("PORTtoc", default=5001), log_level="info")
