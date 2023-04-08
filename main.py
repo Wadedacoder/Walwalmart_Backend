@@ -2,16 +2,18 @@ from fastapi import Depends, FastAPI, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 # from typing import Annotated
 import uvicorn
-from database import Database
 import hashlib
 import json
 from forms import AdditionalUserDataForm, OlapForm
 import os
-# from config import settings
-
+from config import database
+import users
+import products
 #
+
 app = FastAPI()
-database = Database()
+app.include_router(products.router)
+app.include_router(users.router)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 query_select = ("SELECT * FROM admins ; ")
@@ -65,36 +67,36 @@ async def admin_users(token: str = Depends(oauth2_scheme)):
     result2 = database.run_select_query(query2)
     return result2
 
-@app.post("/users/signup")
-async def sign_up(form_data: OAuth2PasswordRequestForm = Depends(),
-                  additional_data: AdditionalUserDataForm = Depends()):
-    username = form_data.username
-    password = form_data.password
-    hashed = hashlib.sha256(password.encode()).hexdigest()
-    display_name = additional_data.name
-    Amount = additional_data.Amount
-    print(display_name, type(display_name) ,Amount)
-    # print()
-    query1 = f"INSERT INTO users (DisplayName, Username, Password, AddressID, Amount) VALUES " \
-             f"('{display_name}', '{username}', '{hashed}', 1, {Amount});"
-    # query2 = f"INSERT INTO users (DisplayName, Username, Password, AddressID, Amount) VALUES ('abr', 'abr', 'abr', 1, 0);"
-    database.run_insert_query(query1)
-    return {"message": hashed}
-
-@app.post("/users/login")
-async def login(form_data: dict):
-    username = form_data['username']
-    password = form_data['password']
-    print(username, password)
-    hashed = hashlib.sha256(password.encode()).hexdigest()
-    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{hashed}';"
-    result = database.run_select_query(query)
-    if result == "[]":
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    result = json.loads(result)
-    curr_user = result[0]["UserID"]
-    # return true
-    return {"status": "success", "message": "Logged in successfully", "user_id": curr_user}
+# @app.post("/users/signup")
+# async def sign_up(form_data: OAuth2PasswordRequestForm = Depends(),
+#                   additional_data: AdditionalUserDataForm = Depends()):
+#     username = form_data.username
+#     password = form_data.password
+#     hashed = hashlib.sha256(password.encode()).hexdigest()
+#     display_name = additional_data.name
+#     Amount = additional_data.Amount
+#     print(display_name, type(display_name) ,Amount)
+#     # print()
+#     query1 = f"INSERT INTO users (DisplayName, Username, Password, AddressID, Amount) VALUES " \
+#              f"('{display_name}', '{username}', '{hashed}', 1, {Amount});"
+#     # query2 = f"INSERT INTO users (DisplayName, Username, Password, AddressID, Amount) VALUES ('abr', 'abr', 'abr', 1, 0);"
+#     database.run_insert_query(query1)
+#     return {"message": hashed}
+#
+# @app.post("/users/login")
+# async def login(form_data: dict):
+#     username = form_data['username']
+#     password = form_data['password']
+#     print(username, password)
+#     hashed = hashlib.sha256(password.encode()).hexdigest()
+#     query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{hashed}';"
+#     result = database.run_select_query(query)
+#     if result == "[]":
+#         raise HTTPException(status_code=400, detail="Incorrect username or password")
+#     result = json.loads(result)
+#     curr_user = result[0]["UserID"]
+#     # return true
+#     return {"status": "success", "message": "Logged in successfully", "user_id": curr_user}
 
 @app.post("/olap")
 async def olap(additional_data: AdditionalUserDataForm = Depends()):

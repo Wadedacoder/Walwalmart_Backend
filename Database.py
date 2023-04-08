@@ -4,7 +4,6 @@ import os
 
 env_var = os.environ
 
-
 class Database:
     def __init__(self):
         self.cnx = mysql.connector.connect(
@@ -18,11 +17,11 @@ class Database:
             print("Connected to database ", env_var["DATABASE"])
         self.cursor = self.cnx.cursor(dictionary=True)
 
-    def run_select_query(self, query, args=None) -> str:
+    def run_select_query(self, query, args=None) -> list:
         self.cursor.execute(query, args)
         result = self.cursor.fetchall()
-        # print(result, type(result), "result")
-        return json.dumps(result)
+        print(result, type(result), "result")
+        return result
 
     def run_insert_query(self, query, args=None) -> bool:
         try:
