@@ -64,3 +64,42 @@ async def add_product(form_data: dict):
         return {"message": "success"}
     else:
         raise HTTPException(status_code=400, detail="Failed to add product")
+
+
+@router.put("/products/{product_id}", tags=["products"])
+async def update_product(product_id: int, form_data: dict):
+    """Update a product.
+    Path parameters:
+    - product_id: int
+    Form data:
+    - name: str (optional)
+    - description: str (optional)
+    - price: int (optional)
+    - category_id: int (optional)
+    - Rating: int (optional)
+    - Quantity: int (optional)
+    """
+    name = form_data.get('name', None)
+    description = form_data.get('description', None)
+    price = form_data.get('price', None)
+    category_id = form_data.get('category_id', None)
+    Rating = form_data.get('Rating', None)
+    Quantity = form_data.get('Quantity', None)
+    query = f"UPDATE products SET "
+    if name is not None:
+        query += f"Name = '{name}', "
+    if description is not None:
+        query += f"Description = '{description}', "
+    if price is not None:
+        query += f"Price = {price}, "
+    if category_id is not None:
+        query += f"CategoryID = {category_id}, "
+    if Rating is not None:
+        query += f"Rating = {Rating}, "
+    if Quantity is not None:
+        query += f"Quantity = {Quantity}, "
+    query = query[:-2] + f" WHERE ProductID = {product_id};"
+    if database.run_insert_query(query):
+        return {"message": "success"}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to update product")
