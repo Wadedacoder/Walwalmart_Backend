@@ -116,13 +116,7 @@ async def olap(additional_data: AdditionalUserDataForm = Depends()):
     result = database.run_select_query(query)
     return result
 
-@app.post("/users/transactions")
-async def transactions(Formdata: AdditionalUserDataForm = Depends()):
-    name = Formdata.name
-    Amount = Formdata.Amount
-    q = f"INSERT INTO itemsincarts (CartID, ProductID, Quantity) VALUES ('{name}','{Amount}',1);"
-    database.run_insert_query(q)
-    return {"message": "success"}
+
 
 
 
