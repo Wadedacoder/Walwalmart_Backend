@@ -105,7 +105,7 @@ async def update_user_profile(form_data: dict):
     amount = form_data.get('amount', None)
     phone = form_data.get('phone', None)
     address = form_data.get('address', None)
-    print(display_name, type(display_name), amount, type(amount), phone, type(phone), address, type(address))
+    # print(display_name, type(display_name), amount, type(amount), phone, type(phone), address, type(address))
     query = f"UPDATE users SET"
     if display_name:
         query += f" DisplayName = '{display_name}',"
@@ -120,9 +120,14 @@ async def update_user_profile(form_data: dict):
         raise HTTPException(status_code=400, detail="Update failed")
     if address:
         query1 = f"INSERT INTO address (Building, Street, City, State) VALUES "
+        query1 += f"('{address.get('Building', None)}', '{address.get('Street', None)}', '{address.get('City', None)}', '{address.get('State', None)}');"
+        database.run_insert_query(query1)
         query = f"UPDATE users SET AddressID = (SELECT AddressID FROM address WHERE Building = '{address.get('Building', None)}' AND Street = '{address.get('Street', None)}' AND City = '{address.get('City', None)}' AND State = '{address.get('State', None)}') WHERE UserID = {user_id};"
         if database.run_update_query(query):
-            print("success")
+            print("success update address")
+        else:
+            raise HTTPException(status_code=400, detail="Update failed")
+    return {"message": "success"}
 
 
 @router.post("/users/cart/add", tags=["users"])
