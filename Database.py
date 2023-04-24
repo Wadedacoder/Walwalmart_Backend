@@ -12,7 +12,7 @@ class Database:
             user=env_var["USER"],
             password=env_var["PASSWORD"],
             database=env_var["DATABASE"],
-            port=env_var["PORT"]
+            # port=env_var["PORT"]
         )
         if (self.cnx):
             print("Connected to database ", env_var["DATABASE"])

@@ -10,6 +10,7 @@ from config import database
 import users
 import products
 import supplier
+# import torch
 #
 
 app = FastAPI()
@@ -172,8 +173,12 @@ async def olap(queryn: int):
     result = database.run_select_query(query)
     return result
 
-
-
+#list all orders of a user
+@app.get("/user/orders/{userid}")
+async def user_orders(userid: int):
+    query = f"SELECT * FROM checkout WHERE UserID = {userid};"
+    result = database.run_select_query(query)
+    return result
 
 
 if __name__ == "__main__":

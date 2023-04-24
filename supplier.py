@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from config import database
+# import torch
 
 # import hashlib
 # import json
@@ -21,11 +22,19 @@ async def get_supplier(supplier_id: int):
     Path parameters:
     - supplier_id: int
     """
+    # Return details of a supplier with the given supplier_id and the address of the supplier from the addresses
+    # table and the phone number of the supplier from the phones table and the products supplied by the supplier from
+    # the products table.
     query = f"SELECT * FROM suppliers WHERE SupplierID = {supplier_id};"
     result = database.run_select_query(query)
-    if result == "[]":
+    if len(result) == 0:
         raise HTTPException(status_code=400, detail="Supplier not found")
-    return result
+    print(result)
+    address_id = result[0]["AddressID"]
+    query = f"SELECT * FROM addresses WHERE AddressID = {address_id};"
+    result2 = database.run_select_query(query)
+    result[0]["Address"] = result2[0]
+    return result[0]
 
 
 @router.post("/suppliers", tags=["suppliers"])
@@ -110,7 +119,20 @@ async def delete_supplier(supplier_id: int):
     Path parameters:
     - supplier_id: int
     """
+    # Remove all products supplied by the supplier from the suppliedproducts table
+    query = f"DELETE FROM suppliedproducts WHERE SupplierID = {supplier_id};"
+    # Remove the phone number of the supplier from the phones table
+    if not database.run_delete_query(query):
+        raise HTTPException(status_code=500, detail="Failed to delete supplier")
+    query = f"DELETE FROM supplierphonenumbers WHERE SupplierID = {supplier_id};"
+    if not database.run_delete_query(query):
+        raise HTTPException(status_code=500, detail="Failed to delete supplier")
+    # Remove the address of the supplier from the addresses table
+
     query = f"DELETE FROM suppliers WHERE SupplierID = {supplier_id};"
+    if not database.run_delete_query(query):
+        raise HTTPException(status_code=500, detail="Failed to delete supplier")
+    query = f"DELETE FROM addresses WHERE AddressID = (SELECT AddressID FROM suppliers WHERE SupplierID = {supplier_id});"
     if not database.run_delete_query(query):
         raise HTTPException(status_code=500, detail="Failed to delete supplier")
     return {"message": "Supplier deleted successfully"}
@@ -121,7 +143,8 @@ async def get_supplier_products(supplier_id: int):
     Path parameters:
     - supplier_id: int
     """
-    query = f"SELECT * FROM suppliedproducts WHERE SupplierID = {supplier_id};"
+    # A query to get all products of a supplier in the suppliedproducts table along with their details from the products table
+    query = f"SELECT * FROM products WHERE ProductID IN (SELECT ProductID FROM suppliedproducts WHERE SupplierID = {supplier_id});"
     result = database.run_select_query(query)
     if result == "[]":
         raise HTTPException(status_code=400, detail="Supplier not found")
@@ -134,7 +157,8 @@ async def get_supplier_product(supplier_id: int, product_id: int):
     - supplier_id: int
     - product_id: int
     """
-    query = f"SELECT * FROM suppliedproducts WHERE SupplierID = {supplier_id} AND ProductID = {product_id};"
+    query = f"SELECT * FROM products WHERE ProductID IN (SELECT ProductID FROM suppliedproducts WHERE SupplierID = {supplier_id} AND ProductID = {product_id});"
+
     result = database.run_select_query(query)
     if result == "[]":
         raise HTTPException(status_code=400, detail="Product not found")

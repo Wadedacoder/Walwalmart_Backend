@@ -218,7 +218,8 @@ async def get_cart(user_id: int):
     """
     query = f"SELECT CartID as ID FROM cart WHERE cart.UserID = {user_id};"
     cartID = database.run_select_query(query)[0]["ID"]
-    query = f"SELECT * FROM itemsincarts WHERE CartID={cartID};"
+    # Add product info from products to cart items
+    query = f"SELECT * FROM itemsincarts JOIN products ON itemsincarts.ProductID = products.ProductID WHERE CartID = {cartID};"
     result = database.run_select_query(query)
     if result != "[]":
         return result
